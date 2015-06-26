@@ -21,11 +21,25 @@ namespace UI
             this.TextInput = string.Empty;
             this.HexInput = string.Empty;
             this.Port.DataReceived += Port_DataReceived;
+            this.Title = "RS-232";
+
         }
 
         #endregion
 
         #region Properties & Fields
+
+        private string _title;
+
+        public string Title
+        {
+            get { return _title; }
+            set
+            {
+                _title = value;
+                this.Notify("Title");
+            }
+        }
 
         private ObservableCollection<LogItemTemplate> _logItems;
 
@@ -88,7 +102,7 @@ namespace UI
         #region Methods
         private void Port_DataReceived(string msg)
         {
-            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Receiving,string.Format("\"{0}\"", msg)))));
+            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Receiving, string.Format("\"{0}\"", msg)))));
         }
 
         #endregion
@@ -146,14 +160,15 @@ namespace UI
         {
             if(this.Port.IsOpen || this.IsConfigured)
             {
-                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error,"Port is already used!"));
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Port is already used!"));
             }
             else
             {
                 this.IsConfigured = true;
                 this.Port.Open();
                 this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Just Opened port " + Port.Name));
-                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information,"Started listening"));
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Started listening"));
+                this.Title = "RS-232" + ":" + this.Port.Name;
             }
             this.Notify("Port");
         }
@@ -227,7 +242,7 @@ namespace UI
                 {
                     this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Hex input not correct!"));
                 }
-                
+
             }
             else
             {
@@ -235,7 +250,7 @@ namespace UI
             }
 
         }
-  
+
         #endregion
 
         #region PingPong

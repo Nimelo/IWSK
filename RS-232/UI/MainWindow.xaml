@@ -5,9 +5,9 @@
         xmlns:classes="clr-namespace:UI.Classes"
         xmlns:converters="clr-namespace:UI.Converters"
         xmlns:controls="clr-namespace:UI.Controls"
-        Title="RS-232"
-        MinHeight="580"
-        MinWidth="550">
+        Title="{Binding Title}"
+        Height="600"
+        Width="400">
     <Window.Resources>
         <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
         <converters:LogTypesToStringConverter x:Key="LogTypesToStringConverter" />
@@ -18,27 +18,31 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListViewItem}">
                         <Grid>
-                            <StackPanel Orientation="Vertical">
-                                <Label Content="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypesToStringConverter}}" 
-                                       FontWeight="Bold"
-                                       Foreground="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypedToBackgroundColorConverter}}"/>
-                                <Label Content="{Binding Path=Msg}" />
-                            </StackPanel>
+                            <Border Margin="1,1,1,1"
+                                    BorderBrush="Black"
+                                    BorderThickness="2,2,2,2">
+                                <StackPanel Orientation="Vertical">
+                                    <Label Content="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypesToStringConverter}}"
+                                           FontWeight="Bold"
+                                           Foreground="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypedToBackgroundColorConverter}}" />
+                                    <Label Content="{Binding Path=Msg}" />
+                                </StackPanel>
+                            </Border>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </Window.Resources>
-    
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
 
         <GroupBox Grid.Column="0"
@@ -54,179 +58,291 @@
                   Header="Input">
             <TabControl>
                 <TabItem Header="Text">
-                    <TextBox Text="{Binding TextInput}"></TextBox>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="50" />
+                        </Grid.RowDefinitions>
+                        <TextBox Grid.Row="0"
+                                 TextWrapping="Wrap"
+                                   Text="{Binding TextInput}"></TextBox>
+                        <Button Grid.Row="1"
+                                Margin="5,5,5,5"
+                                Content="Send Text"
+                                Command="{Binding WriteMsg}" />
+                    </Grid>
+
                 </TabItem>
                 <TabItem Header="Hexadecimal">
-                    <TextBox Text="{Binding HexInput}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <TextBox Grid.Row="0"
+                                 TextWrapping="Wrap"
+                                 Text="{Binding HexInput}" />
+                        <Button Grid.Row="1"
+                                Content="Send Hex"
+                                Margin="5,5,5,5"
+                                Command="{Binding WriteHex}" />
+                    </Grid>
 
-                    </TextBox>
                 </TabItem>
             </TabControl>
         </GroupBox>
-        <GroupBox Grid.Column="1"
-                  Grid.Row="0"
-                  Header="Port Properties">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <Label Grid.Column="0"
-                       Grid.Row="0"
-                       Content="Name" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="0"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.NameDictionary}}"
-                          SelectedValue="{Binding Port.Name}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="1"
-                       Content="BaudRate" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="1"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.BaudRateDictionary}}"
-                          SelectedValue="{Binding Port.BaudRate}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="2"
-                       Content="Parity" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="2"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.ParityDictionary}}"
-                          SelectedValue="{Binding Port.Parity}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="3"
-                       Content="DataBits" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="3"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.DataBitsDictionary}}"
-                          SelectedValue="{Binding Port.DataBits}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="4"
-                       Content="StopBits" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="4"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.StopBitsDictionary}}"
-                          SelectedValue="{Binding Port.StopBits}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="5"
-                       Content="HandShake" />
-                <ComboBox Grid.Column="1"
-                          Grid.Row="5"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.HandshakeDictionary}}"
-                          SelectedValue="{Binding Port.Handshake}"
-                          DisplayMemberPath="Value"
-                          SelectedValuePath="Key" />
-                <Label Grid.Column="0"
-                       Grid.Row="6"
-                       Content="ReadTimeout" />
-                <TextBox Grid.Column="1"
-                         Grid.Row="6"></TextBox>
-                <Label Grid.Column="0"
-                       Grid.Row="7"
-                       Content="WriteTimeout" />
-                <TextBox Grid.Column="1"
-                         Grid.Row="7"></TextBox>
 
-            </Grid>
-        </GroupBox>
-        <Grid Grid.Column="1"
-              Grid.Row="1">
+        <Grid Grid.Row="0"
+              Grid.Column="1"
+              Grid.RowSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
-            <GroupBox Grid.Row="0"
-                      Header="Lines Management">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0"
-                                Orientation="Horizontal">
-                        <Button Content="DTR"
-                                Width="50"
-                                Command="{Binding DTR}" />
-                        <Label Content="{Binding Port.DTR, Converter={StaticResource BoolToStringConverter}}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                Grid.Row="1">
-                        <Button Content="DSR"
-                                Width="50" />
-                        <Label Content="{Binding Port.DSR, Converter={StaticResource BoolToStringConverter}}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                Grid.Row="2">
-                        <Button Content="RTS"
-                                Width="50"
-                                Command="{Binding RTS}" />
-                        <Label Content="{Binding Port.RTS, Converter={StaticResource BoolToStringConverter}}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                Grid.Row="3">
-                        <Button Content="CTS"
-                                Width="50" />
-                        <Label Content="{Binding Port.CTS, Converter={StaticResource BoolToStringConverter}}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal"
-                                Grid.Row="4">
-                        <Button Content="CD"
-                                Width="50" />
-                        <Label Content="{Binding Port.CD, Converter={StaticResource BoolToStringConverter}}" />
-                    </StackPanel>
+            <Expander Grid.Row="0"
+                      ExpandDirection="Left">
+                <Expander.Header>
+                    <TextBlock Text="PP">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <Grid Background="Cornsilk">
+                    <Grid.BitmapEffect>
+                        <DropShadowBitmapEffect />
+                    </Grid.BitmapEffect>
+
+                    <GroupBox Header="Port Properties">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Label Grid.Column="0"
+                                   Grid.Row="0"
+                                   Content="Name" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="0"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.NameDictionary}}"
+                                      SelectedValue="{Binding Port.Name}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="1"
+                                   Content="BaudRate" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="1"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.BaudRateDictionary}}"
+                                      SelectedValue="{Binding Port.BaudRate}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="2"
+                                   Content="Parity" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="2"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.ParityDictionary}}"
+                                      SelectedValue="{Binding Port.Parity}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="3"
+                                   Content="DataBits" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="3"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.DataBitsDictionary}}"
+                                      SelectedValue="{Binding Port.DataBits}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="4"
+                                   Content="StopBits" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="4"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.StopBitsDictionary}}"
+                                      SelectedValue="{Binding Port.StopBits}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="5"
+                                   Content="HandShake" />
+                            <ComboBox Grid.Column="1"
+                                      Grid.Row="5"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Margin="5,5,5,5"
+                                      ItemsSource="{Binding Source={x:Static dictionaries:SerialPortDictionaries.HandshakeDictionary}}"
+                                      SelectedValue="{Binding Port.Handshake}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key" />
+                            <Label Grid.Column="0"
+                                   Grid.Row="6"
+                                   Content="ReadTimeout" />
+                            <TextBox Grid.Column="1"
+                                     Grid.Row="6"></TextBox>
+                            <Label Grid.Column="0"
+                                   Grid.Row="7"
+                                   Content="WriteTimeout" />
+                            <TextBox Grid.Column="1"
+                                     Grid.Row="7"></TextBox>
+
+                        </Grid>
+
+                    </GroupBox>
                 </Grid>
-            </GroupBox>
-            <GroupBox Grid.Row="1"
-                      Header="Actions">
-                <StackPanel Orientation="Vertical">
-                    <Button Content="Send Text"
-                            Command="{Binding WriteMsg}" />
-                    <Button Content="Send Hex"
-                            Command="{Binding WriteHex}" />
-                    <Button Content="Ping"
-                            Command="{Binding PingPong}" />
-                    <Button Content="OpenPort"
-                            Command="{Binding OpenPort}" />
-                    <Button Content="RefreshLines"
-                            Command="{Binding RefreshLines}" />
-                </StackPanel>
-            </GroupBox>
+            </Expander>
+
+            <Expander ExpandDirection="Left"
+                      Grid.Row="1">
+                <Expander.Header>
+                    <TextBlock Text="SBC">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <Grid Background="Cornsilk">
+                    <Grid.BitmapEffect>
+                        <DropShadowBitmapEffect />
+                    </Grid.BitmapEffect>
+
+                    <GroupBox Header="Port Properties">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+
+                        </Grid>
+
+                    </GroupBox>
+                </Grid>
+            </Expander>
+
+            <Expander Grid.Row="2"
+                      ExpandDirection="Left">
+                <Expander.Header>
+                    <TextBlock Text="LM">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <Grid Background="Cornsilk">
+                    <Grid.BitmapEffect>
+                        <DropShadowBitmapEffect />
+                    </Grid.BitmapEffect>
+                    <GroupBox Grid.Row="0"
+                              Header="Lines Management">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0"
+                                        Orientation="Horizontal">
+                                <Button Content="DTR"
+                                        Width="50"
+                                        Command="{Binding DTR}" />
+                                <Label Content="{Binding Port.DTR, Converter={StaticResource BoolToStringConverter}}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Row="1">
+                                <Button Content="DSR"
+                                        Width="50" />
+                                <Label Content="{Binding Port.DSR, Converter={StaticResource BoolToStringConverter}}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Row="2">
+                                <Button Content="RTS"
+                                        Width="50"
+                                        Command="{Binding RTS}" />
+                                <Label Content="{Binding Port.RTS, Converter={StaticResource BoolToStringConverter}}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Row="3">
+                                <Button Content="CTS"
+                                        Width="50" />
+                                <Label Content="{Binding Port.CTS, Converter={StaticResource BoolToStringConverter}}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Row="4">
+                                <Button Content="CD"
+                                        Width="50" />
+                                <Label Content="{Binding Port.CD, Converter={StaticResource BoolToStringConverter}}" />
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </Expander>
+            <Expander Grid.Row="3"
+                      ExpandDirection="Left">
+                <Expander.Header>
+                    <TextBlock Text="A">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <Grid Background="Cornsilk">
+                    <Grid.BitmapEffect>
+                        <DropShadowBitmapEffect />
+                    </Grid.BitmapEffect>
+                    <GroupBox Grid.Row="1"
+                              Header="Actions">
+                        <StackPanel Orientation="Vertical">
+                            <Button Content="Ping"
+                                    Command="{Binding PingPong}" />
+                            <Button Content="OpenPort"
+                                    Command="{Binding OpenPort}" />
+                            <Button Content="RefreshLines"
+                                    Command="{Binding RefreshLines}" />
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </Expander>
 
         </Grid>
-
     </Grid>
 </Window>
