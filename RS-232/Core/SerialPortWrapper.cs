@@ -13,6 +13,7 @@ namespace Core
 
         private SerialPort _port;
 
+        private string temporaryString;
         #endregion
 
         #region Ctors & DCtors
@@ -20,17 +21,23 @@ namespace Core
         public SerialPortWrapper()
         {
             this._port = new SerialPort();
+            _port.DataReceived += new SerialDataReceivedEventHandler(_serialPort_DataReceived);
+            this.StopCharacters = "\n";
+            this.temporaryString = string.Empty;
         }
+
 
         ~SerialPortWrapper()
         {
+            _port.DataReceived -= _serialPort_DataReceived;
             if(this._port.IsOpen)
                 this._port.Close();
+
         }
         #endregion
 
         #region Configuration Properties
-        public string PortName
+        public string Name
         {
             get
             {
@@ -43,7 +50,7 @@ namespace Core
 
         }
 
-        public int PortBaudRate
+        public int BaudRate
         {
             get
             {
@@ -55,7 +62,7 @@ namespace Core
             }
         }
 
-        public Parity PortParity
+        public Parity Parity
         {
             get
             {
@@ -67,7 +74,7 @@ namespace Core
             }
         }
 
-        public int PortDataBits
+        public int DataBits
         {
             get
             {
@@ -79,7 +86,7 @@ namespace Core
             }
         }
 
-        public StopBits PortStopBits
+        public StopBits StopBits
         {
             get
             {
@@ -91,7 +98,7 @@ namespace Core
             }
         }
 
-        public Handshake PortHandShake
+        public Handshake Handshake
         {
             get
             {
@@ -103,7 +110,7 @@ namespace Core
             }
         }
 
-        public int PortReadTimeout
+        public int ReadTimeout
         {
             get
             {
@@ -115,7 +122,7 @@ namespace Core
             }
         }
 
-        public int PortWriteTimeout
+        public int WriteTimeout
         {
             get
             {
@@ -124,6 +131,19 @@ namespace Core
             set
             {
                 this._port.WriteTimeout = value;
+            }
+        }
+
+        private string _stopCharacters;
+        public string StopCharacters
+        {
+            get
+            {
+                return this._stopCharacters;
+            }
+            set
+            {
+                this._stopCharacters = value;
             }
         }
         #endregion
@@ -183,22 +203,15 @@ namespace Core
         #endregion
 
         #region Methods
-
-        public string Read()
+       
+        public void WriteWithStopCharacters(string msg)
         {
-            try
-            {
-                string message = _port.ReadLine();
-                return message;
-            }
-            catch(TimeoutException te)
-            {
-                throw te;
-            }
+            this._port.Write(msg + this.StopCharacters);
         }
-        public void Write(string msg)
+
+        public void WriteData(byte [] data)
         {
-            this._port.Write(msg);
+            this._port.Write(data, 0, data.Count());
         }
 
         public void Open()
@@ -210,16 +223,42 @@ namespace Core
         {
             this._port.Close();
         }
-        public bool IsOpen()
+        public bool IsOpen
         {
-            return this._port.IsOpen;
+            get
+            {
+                return this._port.IsOpen;
+            }
+
         }
 
         #endregion
 
         #region Events
+        private void _serialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            byte[] buffer = new byte[this._port.ReadBufferSize];
 
+            int bytesRead = this._port.Read(buffer, 0, buffer.Length);
+
+            this.temporaryString += Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+            if(temporaryString.IndexOf(this.StopCharacters) > -1)
+            {
+                this.temporaryString = this.temporaryString.Remove(this.temporaryString.IndexOf(this.StopCharacters));
+
+                DataReceived(this.temporaryString);
+
+                this.temporaryString = string.Empty;
+            }
+            
+        }
+
+        public delegate void DataReceivedHandler(string msg);
+        public event DataReceivedHandler DataReceived;
         #endregion
 
     }
+
+
 }
