@@ -56,6 +56,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Classes\LogItemTemplate.cs" />
+    <Compile Include="Classes\LogTypesEnum.cs" />
     <Compile Include="Classes\RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -67,6 +69,8 @@
     </Compile>
     <Compile Include="Controls\AutoScrollingListView.cs" />
     <Compile Include="Converters\BoolToStringConverter.cs" />
+    <Compile Include="Converters\LogTypedToBackgroundColorConverter.cs" />
+    <Compile Include="Converters\LogTypesToStringConverter.cs" />
     <Compile Include="Dictionaries.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

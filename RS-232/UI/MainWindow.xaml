@@ -10,7 +10,27 @@
         MinWidth="550">
     <Window.Resources>
         <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
+        <converters:LogTypesToStringConverter x:Key="LogTypesToStringConverter" />
+        <converters:LogTypedToBackgroundColorConverter x:Key="LogTypedToBackgroundColorConverter" />
+        <Style x:Key="LogItemTemplate"
+               TargetType="{x:Type ListViewItem}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListViewItem}">
+                        <Grid>
+                            <StackPanel Orientation="Vertical">
+                                <Label Content="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypesToStringConverter}}" 
+                                       FontWeight="Bold"
+                                       Foreground="{Binding Path=Title, Converter={StaticResource ResourceKey=LogTypedToBackgroundColorConverter}}"/>
+                                <Label Content="{Binding Path=Msg}" />
+                            </StackPanel>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
@@ -24,8 +44,8 @@
         <GroupBox Grid.Column="0"
                   Grid.Row="0"
                   Header="Log">
-            <controls:AutoScrollingListView 
-                ItemsSource="{Binding LogItems}">
+            <controls:AutoScrollingListView ItemsSource="{Binding LogItems}"
+                                            ItemContainerStyle="{DynamicResource LogItemTemplate}">
 
             </controls:AutoScrollingListView>
         </GroupBox>
@@ -37,7 +57,7 @@
                     <TextBox Text="{Binding TextInput}"></TextBox>
                 </TabItem>
                 <TabItem Header="Hexadecimal">
-                    <TextBox Text="{Binding HexInput}"> 
+                    <TextBox Text="{Binding HexInput}">
 
                     </TextBox>
                 </TabItem>

@@ -17,21 +17,19 @@ namespace UI
         public MainWindowViewModel()
         {
             this.Port = new Core.SerialPortWrapper();
-            this.LogItems = new ObservableCollection<string>();
+            this.LogItems = new ObservableCollection<LogItemTemplate>();
             this.TextInput = string.Empty;
             this.HexInput = string.Empty;
             this.Port.DataReceived += Port_DataReceived;
-
-
         }
 
         #endregion
 
         #region Properties & Fields
 
-        private ObservableCollection<string> _logItems;
+        private ObservableCollection<LogItemTemplate> _logItems;
 
-        public ObservableCollection<string> LogItems
+        public ObservableCollection<LogItemTemplate> LogItems
         {
             get { return _logItems; }
             set
@@ -90,7 +88,7 @@ namespace UI
         #region Methods
         private void Port_DataReceived(string msg)
         {
-            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(string.Format("Recived: \"{0}\"", msg))));
+            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Receiving,string.Format("\"{0}\"", msg)))));
         }
 
         #endregion
@@ -146,16 +144,16 @@ namespace UI
 
         private void OpenPortClick(object obj)
         {
-            if(this.Port.IsOpen && !this.IsConfigured)
+            if(this.Port.IsOpen || this.IsConfigured)
             {
-                this.LogItems.Add("Port is already used!");
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error,"Port is already used!"));
             }
             else
             {
                 this.IsConfigured = true;
                 this.Port.Open();
-                this.LogItems.Add("Just Opened port " + Port.Name);
-                this.LogItems.Add("Started listening");
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Just Opened port " + Port.Name));
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information,"Started listening"));
             }
             this.Notify("Port");
         }
@@ -194,12 +192,12 @@ namespace UI
         {
             if(this.Port.IsOpen && this.IsConfigured)
             {
-                this.LogItems.Add(string.Format("Sending: \"{0}\"", this.TextInput));
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.SendingText, string.Format("\"{0}\"", this.TextInput)));
                 this.Port.WriteWithStopCharacters(this.TextInput);
             }
             else
             {
-                this.LogItems.Add("Cannot send input, because of port error!");
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Cannot send input, because of port error!"));
             }
         }
         #endregion
@@ -217,8 +215,24 @@ namespace UI
 
         private void WriteHexClick(object obj)
         {
-            var bytes = this.HexInput.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => (byte)Convert.ToInt32(x, 16)).ToArray();
-            this.Port.WriteData(bytes);
+            if(this.Port.IsOpen && this.IsConfigured)
+            {
+                try
+                {
+                    var bytes = this.HexInput.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => (byte)Convert.ToInt32(x, 16)).ToArray();
+                    this.Port.WriteData(bytes);
+                    this.LogItems.Add(new LogItemTemplate(LogTypesEnum.SendingHex, this.HexInput));
+                }
+                catch(Exception e)
+                {
+                    this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Hex input not correct!"));
+                }
+                
+            }
+            else
+            {
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Cannot send input, because of port error!"));
+            }
 
         }
   
@@ -239,12 +253,12 @@ namespace UI
         {
             if(this.Port.IsOpen && this.IsConfigured)
             {
-                this.LogItems.Add("Sending ping");
-                this.Port.WriteWithStopCharacters("ping");
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.SendingPing, "$Ping$"));
+                this.Port.WriteWithStopCharacters("$Ping$");
             }
             else
             {
-                this.LogItems.Add("Cannot send ping, because of port error!");
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Cannot send ping, because of port error!"));
             }
         }
         #endregion
