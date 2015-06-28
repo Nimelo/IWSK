@@ -14,6 +14,8 @@ namespace UI.Classes
         SendingHex,
         SendingPing,
         Receiving,
+        PinChanged,
+        Buffer,
         Other
     }
 }

@@ -20,11 +20,14 @@ namespace Core
         public SerialPortWrapper()
         {
             this._port = new SerialPort();
-            _port.DataReceived += new SerialDataReceivedEventHandler(_serialPort_DataReceived);
+            this._port.DataReceived += new SerialDataReceivedEventHandler(_serialPort_DataReceived);
+            this._port.ErrorReceived += new SerialErrorReceivedEventHandler(_serialPort_ErrorReceived);
+            this._port.PinChanged += new SerialPinChangedEventHandler(_serialPort_PinChanged);
             this.StopCharacters = "\n";
             this.temporaryString = string.Empty;
+            this._port.ReadTimeout = 1000;
+            this._port.WriteTimeout = 1000;
         }
-
 
         ~SerialPortWrapper()
         {
@@ -202,25 +205,74 @@ namespace Core
         #endregion
 
         #region Methods
-       
-        public void WriteWithStopCharacters(string msg)
-        {
-            this._port.Write(msg + this.StopCharacters);
+
+        public void SimplyTransaction(string msg)
+        {           
+            try
+            {
+                this._port.DataReceived -= _serialPort_DataReceived;
+                this.WriteWithStopCharacters(msg);
+                string message = _port.ReadTo(this.StopCharacters);
+                this.DataReceived(message);
+                this.temporaryString = string.Empty;
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
+            finally
+            {
+                this._port.DataReceived += _serialPort_DataReceived;
+            }
+
         }
 
-        public void WriteData(byte [] data)
+        public void WriteWithStopCharacters(string msg)
         {
-            this._port.Write(data, 0, data.Count());
+            try
+            {
+                this._port.Write(msg + this.StopCharacters);
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
+        }
+
+        public void WriteData(byte[] data)
+        {
+            try
+            {
+                this._port.Write(data, 0, data.Count());
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
         }
 
         public void Open()
         {
-            this._port.Open();
+            try
+            {
+                this._port.Open();
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
         }
 
         public void Close()
         {
-            this._port.Close();
+            try
+            {
+                this._port.Close();
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
         }
         public bool IsOpen
         {
@@ -234,30 +286,60 @@ namespace Core
         #endregion
 
         #region Events
+
+        #region DataReceived
         private void _serialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             byte[] buffer = new byte[this._port.ReadBufferSize];
 
             int bytesRead = this._port.Read(buffer, 0, buffer.Length);
 
-            this.temporaryString += Encoding.ASCII.GetString(buffer, 0, bytesRead);
+            var toDecode = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+            this.temporaryString += toDecode;
 
             if(temporaryString.IndexOf(this.StopCharacters) > -1)
             {
                 this.temporaryString = this.temporaryString.Remove(this.temporaryString.IndexOf(this.StopCharacters));
 
-                DataReceived(this.temporaryString);
+                this.DataReceived(this.temporaryString);
 
                 this.temporaryString = string.Empty;
             }
-            
+            else
+            {
+                this.DataReceived(toDecode, true);
+            }
+
         }
 
-        public delegate void DataReceivedHandler(string msg);
+        public delegate void DataReceivedHandler(string msg, bool IsBuffer = false);
         public event DataReceivedHandler DataReceived;
+
+        #endregion
+
+        #region ErrorReceived
+        private void _serialPort_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
+        {
+            this.ErrorReceived(e.EventType.ToString());
+        }
+
+        public delegate void ErrorReceivedHandler(string msg);
+        public event ErrorReceivedHandler ErrorReceived;
+
+        #endregion
+
+        #region PinChanged
+        private void _serialPort_PinChanged(object sender, SerialPinChangedEventArgs e)
+        {
+            this.PinChanged(e.EventType.ToString());
+        }
+
+        public delegate void PinChangedHandler(string msg);
+        public event PinChangedHandler PinChanged;
+        #endregion
+
         #endregion
 
     }
-
-
 }

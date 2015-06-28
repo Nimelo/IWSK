@@ -18,16 +18,23 @@ namespace UI
         {
             this.Port = new Core.SerialPortWrapper();
             this.LogItems = new ObservableCollection<LogItemTemplate>();
-            this.TextInput = string.Empty;
-            this.HexInput = string.Empty;
+            this.TextInput = "Hello RS-232";
+            this.HexInput = "24;0A;";
             this.Port.DataReceived += Port_DataReceived;
+            this.Port.ErrorReceived += Port_ErrorReceived;
+            this.Port.PinChanged += Port_PinChanged;
             this.Title = "RS-232";
+            this.wasPing = false;
 
         }
 
         #endregion
 
         #region Properties & Fields
+
+        private DateTime lastPing;
+
+        private bool wasPing;
 
         private string _title;
 
@@ -100,10 +107,6 @@ namespace UI
         #endregion
 
         #region Methods
-        private void Port_DataReceived(string msg)
-        {
-            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Receiving, string.Format("\"{0}\"", msg)))));
-        }
 
         #endregion
 
@@ -122,8 +125,16 @@ namespace UI
 
         private void SwitchDTR(object obj)
         {
-            this.Port.DTR = !this.Port.DTR;
-            this.Notify("Port");
+            try
+            {
+                this.Port.DTR = !this.Port.DTR;
+                this.Notify("Port");
+            }
+            catch
+            {
+
+            }
+
         }
         #endregion
 
@@ -140,8 +151,15 @@ namespace UI
 
         private void SwitchRTS(object obj)
         {
-            this.Port.RTS = !this.Port.RTS;
-            this.Notify("Port");
+            try
+            {
+                this.Port.RTS = !this.Port.RTS;
+                this.Notify("Port");
+            }
+            catch
+            {
+
+            }
         }
         #endregion
 
@@ -217,6 +235,25 @@ namespace UI
         }
         #endregion
 
+        #region WriteTransact
+        ICommand _writeTransactMsg;
+        public ICommand WriteTransact
+        {
+            get
+            {
+                return _writeTransactMsg ??
+                    ( _writeTransactMsg = new RelayCommand(WriteTransactClick) );
+            }
+        }
+
+        private void WriteTransactClick(object obj)
+        {
+            this.LogItems.Add(new LogItemTemplate(LogTypesEnum.SendingText, string.Format("\"{0}\"", this.TextInput)));
+            this.Port.SimplyTransaction(this.TextInput);
+        }
+
+        #endregion
+
         #region WriteHex
         ICommand _writeHex;
         public ICommand WriteHex
@@ -266,21 +303,132 @@ namespace UI
 
         private void PingPongClick(object obj)
         {
+
             if(this.Port.IsOpen && this.IsConfigured)
             {
                 this.LogItems.Add(new LogItemTemplate(LogTypesEnum.SendingPing, "$Ping$"));
-                this.Port.WriteWithStopCharacters("$Ping$");
+                this.wasPing = true;
+                this.lastPing = DateTime.Now;
+                this.Port.SimplyTransaction("$Ping$");
+
             }
             else
             {
-                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Cannot send ping, because of port error!"));
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Port is closed!"));
             }
+
+        }
+        #endregion
+
+        #region ClosePort
+
+        ICommand _closePort;
+        public ICommand ClosePort
+        {
+            get
+            {
+                return _closePort ??
+                    ( _closePort = new RelayCommand(ClosePortClick) );
+            }
+        }
+
+        private void ClosePortClick(object obj)
+        {
+            if(this.Port.IsOpen && this.IsConfigured
+                || !this.Port.IsOpen && this.IsConfigured)
+            {
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Closed port!"));
+                this.Port.Close();
+                this.IsConfigured = false;
+                this.Title = "RS-232";
+            }
+            else if(!this.IsConfigured && !this.Port.IsOpen)
+            {
+
+            }
+            else
+            {
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, "Cannot access to port: " + Port.Name));
+            }
+            this.Notify("Port");
+        }
+        #endregion
+
+        #region Reconfigure
+        ICommand _reconfigurePort;
+        public ICommand Reconfigure
+        {
+            get
+            {
+                return _reconfigurePort ??
+                    ( _reconfigurePort = new RelayCommand(ReconfigureClick) );
+            }
+        }
+
+        private void ReconfigureClick(object obj)
+        {
+            if(this.Port.IsOpen && this.IsConfigured
+                || !this.Port.IsOpen && this.IsConfigured)
+            {
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Reconfigured port!"));
+                this.Port.Close();
+                this.Port.Open();
+                this.IsConfigured = true;
+                this.Title = "RS-232" + ":" + this.Port.Name;
+            }
+            else if(!this.IsConfigured && !this.Port.IsOpen)
+            {
+                this.OpenPortClick(null);
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Reconfigured port!"));
+            }
+            else
+            {
+                this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, "Cannot access to port: " + Port.Name));
+            }
+            this.Notify("Port");
         }
         #endregion
 
         #endregion
 
         #region Events
+        #endregion
+
+        #region Event handlers
+        private void Port_DataReceived(string msg, bool isBuffer)
+        {
+            if(isBuffer)
+            {
+                App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Buffer, string.Format("\"{0}\"", msg)))));
+            }
+            else
+            {
+                App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Receiving, string.Format("\"{0}\"", msg)))));
+
+                if(msg == "$Ping$")
+                {
+                    this.Port.WriteWithStopCharacters("$Pong$");
+                    App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Information, string.Format("Responding: {0}", "$pong$")))));
+                }
+                else if(msg == "$Pong$" && this.wasPing)
+                {                  
+                    App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Other, string.Format("RTD {0}  seconds", ( DateTime.Now - lastPing ).TotalSeconds)))));
+                    this.wasPing = false;
+                }
+            }
+        }
+
+        private void Port_PinChanged(string msg)
+        {
+            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.PinChanged, string.Format("\"{0}\"", msg)))));
+            this.Notify("Port");
+        }
+
+        private void Port_ErrorReceived(string msg)
+        {
+            App.Current.Dispatcher.Invoke(new Action(() => this.LogItems.Add(new LogItemTemplate(LogTypesEnum.Error, string.Format("\"{0}\"", msg)))));
+            this.Notify("Port");
+        }
         #endregion
 
         #region Notify

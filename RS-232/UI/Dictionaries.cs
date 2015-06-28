@@ -20,7 +20,7 @@ namespace UI
         private static Dictionary<string, string> PrepareNameDictionary()
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
-            
+
             var names = SerialPort.GetPortNames();
             names.ToList().ForEach(x => dictionary.Add(x, x));
 
@@ -31,9 +31,21 @@ namespace UI
         #region BaudRate
         private static Dictionary<int, string> _baudRateDictionary = new Dictionary<int, string>()
         {
-                  {100, "100"},
-                  {9600, "9600"},
-                  {11520,"11520"}
+                {110, "110"},
+                {300, "300"},
+                {600, "600"},
+                {1200, "1200"},
+                {2400, "2400"},
+                {4800, "4800"},
+                {9600, "9600"},
+                {14400, "14400"},
+                {19200, "19200"},
+                {28800, "28800"},
+                {38400,  "38400"},
+                {56000,  "56000"},
+                {57600, "57600"},
+                {115200, "115200"}
+                  
         };
         public static Dictionary<int, string> BaudRateDictionary
         {

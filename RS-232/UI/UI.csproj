@@ -71,6 +71,7 @@
     <Compile Include="Converters\BoolToStringConverter.cs" />
     <Compile Include="Converters\LogTypedToBackgroundColorConverter.cs" />
     <Compile Include="Converters\LogTypesToStringConverter.cs" />
+    <Compile Include="Converters\StringToStopCharacters.cs" />
     <Compile Include="Dictionaries.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

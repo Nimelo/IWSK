@@ -25,6 +25,8 @@ namespace UI.Converters
                     return System.Windows.Media.Brushes.OrangeRed;
                 case Classes.LogTypesEnum.SendingPing:
                     return System.Windows.Media.Brushes.Violet;
+                case Classes.LogTypesEnum.Buffer:
+                    return System.Windows.Media.Brushes.Cyan;
                 case Classes.LogTypesEnum.Other:
 
                 default:
