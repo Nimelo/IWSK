@@ -8,7 +8,7 @@ public class PortChat
     static bool _continue;
     static SerialPort _serialPort;
 
-    public static void Main()
+    public static void MainS()
     {
         string name;
         string message;

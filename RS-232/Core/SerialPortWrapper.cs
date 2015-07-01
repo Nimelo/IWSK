@@ -23,7 +23,7 @@ namespace Core
             this._port.DataReceived += new SerialDataReceivedEventHandler(_serialPort_DataReceived);
             this._port.ErrorReceived += new SerialErrorReceivedEventHandler(_serialPort_ErrorReceived);
             this._port.PinChanged += new SerialPinChangedEventHandler(_serialPort_PinChanged);
-            this.StopCharacters = "\n";
+            this.StopCharacters = "\r\n";
             this.temporaryString = string.Empty;
             this._port.ReadTimeout = 1000;
             this._port.WriteTimeout = 1000;
@@ -206,8 +206,68 @@ namespace Core
 
         #region Methods
 
+        public void ModbusWrite(byte [] frame)
+        {
+            try
+            {
+                this._port.DataReceived -= _serialPort_DataReceived;
+
+                for(int i = 0; i < frame.Length; i += 2)
+                {
+                    if(i < frame.Length && i + 1 < frame.Length)
+                        this._port.Write(frame, i, 2);
+                    else if(i < frame.Length)
+                        this._port.Write(frame, i, 1);
+                    System.Threading.Thread.Sleep(10);
+                }
+            }
+            catch(Exception e)
+            {
+                this.ErrorReceived(e.Message.ToString());
+            }
+            finally
+            {
+                this._port.DataReceived += _serialPort_DataReceived;
+            }
+        }
+        public void ModbusTransaction(byte[] frame, int count = 0)
+        {
+            int error = 0;
+            try
+            {
+                this._port.DataReceived -= _serialPort_DataReceived;
+                for(int i = 0; i < frame.Length; i += 2)
+                {
+                    if(i < frame.Length && i + 1 < frame.Length)
+                        this._port.Write(frame, i, 2);
+                    else if(i < frame.Length)
+                        this._port.Write(frame, i, 1);
+                    System.Threading.Thread.Sleep(10);
+                }
+                    
+                //this._port.Write(frame, 0, frame.Length);
+
+                string message = _port.ReadTo(this.StopCharacters);
+                this.DataReceived(message);
+                this.temporaryString = string.Empty;
+            }
+            catch(Exception e)
+            {
+                this._port.DiscardInBuffer();
+                this._port.DiscardOutBuffer();
+                this.ErrorReceived(e.Message.ToString() + " => " + count );
+                error++;
+            }
+            finally
+            {
+                this._port.DataReceived += _serialPort_DataReceived;
+                if(count > 0 && error > 0)
+                    this.ModbusTransaction(frame, count - 1);
+            }
+        }
+
         public void SimplyTransaction(string msg)
-        {           
+        {
             try
             {
                 this._port.DataReceived -= _serialPort_DataReceived;
@@ -218,6 +278,8 @@ namespace Core
             }
             catch(Exception e)
             {
+                this._port.DiscardInBuffer();
+                this._port.DiscardOutBuffer();
                 this.ErrorReceived(e.Message.ToString());
             }
             finally
